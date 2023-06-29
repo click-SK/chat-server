@@ -149,6 +149,6 @@ changeStream.on("change", async (next) => {
 
 run().catch(console.dir);
 
-server.listen(4444, () => {
-  console.log('Listening on port 4444');
+server.listen(process.env.PORT, () => {
+  console.log(`Listening on port ${process.env.PORT}`);
 });
