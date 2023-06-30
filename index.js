@@ -32,10 +32,7 @@ mongoose.connect(process.env.MONGODB_CONNECTION_STRING, {
 
 app.patch('/add-message', async (req, res) => {
   const { message, id, user } = req.body;
-  console.log('work');
-  console.log('message',message);
-  console.log('id',id);
-  console.log('user',user);
+
   const result = await RoomsModel.findOneAndUpdate(
     { roomId: id },
     { $push: { messages: { message, user } } },
@@ -102,30 +99,26 @@ changeStream.on("change", async (next) => {
   switch (next.operationType) {
     case "insert":
       const { message, roomId } = next.fullDocument;
-      console.log('new message',message);
-      io.sockets.in(roomId).emit("chat message", {data: {
-        name: "ros",
-        age: 25
-      }});
+      console.log('CRERATE');
+      io.sockets.in(roomId).emit("chat message");
       console.log("insert message", message);
       break;
     case "update":
       const updatedMessage = next.updateDescription.updatedFields;
-      console.log('updatedMessage',updatedMessage);
+      console.log('UPDATE');
       const { _id } = next.documentKey;
-      console.log('ID:',_id);
+
       const allData = RoomsModel.findById(_id);
       const finalObject = next.updateDescription.updatedFields;
-      console.log('allData',allData);
-      console.log("update", next.updateDescription.updatedFields);
+
       let newMessage = '';
       let newUser = '';
       for (const key in finalObject) {
         if(finalObject.hasOwnProperty(key)) {
           const value = finalObject[key];
           if(key != 'updatedAt') {
-            newMessage = value.message;
-            newUser = value.user;
+            newMessage = value.message || value[0].message;
+            newUser = value.user || value[0].user;
             console.log('its work',value);
           }
         }
@@ -134,7 +127,7 @@ changeStream.on("change", async (next) => {
       console.log('newMessage',newMessage);
       console.log('newUser',newUser);
 
-      io.emit("chat message", { mes: newMessage, user: newUser });
+      io.emit("chat message", { message: newMessage, user: newUser });
 
       break;
   }
